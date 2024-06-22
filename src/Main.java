@@ -5,7 +5,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Arrays;
+
 import java.util.Scanner;
 
 public class Main {
@@ -85,10 +85,12 @@ public class Main {
 
     //System.out.println("\n=========================WEATHER DATA ==========================\n" + weatherData + "\n========================================");
 
-    System.out.printf("=========== DATOS DEL CLIMA ===========\n" +
-            "Nombre de la ciudad:%s\n" +
-            "Latitud:%s\n" +
-            "Longitud:%s\n=====================================",nameInSpanish,lat,lon);
+    System.out.printf("""
+=========== DATOS DEL CLIMA ===========
+"Nombre de la ciudad:%s
+"Latitud:%s
+"Longitud:%s
+=====================================""",nameInSpanish,lat,lon);
 
   }
 }
