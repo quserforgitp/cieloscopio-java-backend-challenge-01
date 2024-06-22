@@ -89,7 +89,7 @@ public class Main {
     String lat = jsonObj.get("lat").getAsString();
     String lon = jsonObj.get("lon").getAsString();
 
-    String nameInSpanish = jsonObj.get("name").getAsString();;
+    String nameInSpanish = jsonObj.get("name").getAsString();
     if (jsonObj.has("local_names"))
       nameInSpanish = jsonObj.get("local_names").getAsJsonObject().get("es").getAsString();
 
