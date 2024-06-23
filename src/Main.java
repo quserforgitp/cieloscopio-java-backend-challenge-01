@@ -91,36 +91,22 @@ public class Main {
               .build();
 
       HttpResponse<String> geoLocResponse = client.send(geoLocRequest, HttpResponse.BodyHandlers.ofString());
-
       String geoLocData = geoLocResponse.body();
 
       // 10.-- EXTRAER COORDENADAS DE LA RESPUESTA (API GEO LOC)
 
-      // parsear a jsonElement (manipulable, se puede convertir a tipos de datos json)
-      JsonElement jsonElement = JsonParser.parseString(geoLocData);
-
-      // parsear a array tipo json
-      JsonArray jsonArray = jsonElement.getAsJsonArray();
+      String[] geoLocInfo = extractGeoLocData(geoLocData);//[lat,lon,nameInSpanish]
 
       // obtener el objeto tipo json del array tipo json
-      if (jsonArray.isEmpty()) {
+      if (geoLocInfo.length == 0) {
         System.err.println("No se encontró información con el nombre de ciudad introducido: " + cityName);
         opt = 0;
         cityName = "";
         continue;
       }
-
-      JsonObject jsonObj = jsonArray.get(0).getAsJsonObject();
-
-      // Extraer datos del objeto tipo json como String's
-      String lat = jsonObj.get("lat").getAsString();
-      String lon = jsonObj.get("lon").getAsString();
-
-      String nameInSpanish = jsonObj.get("name").getAsString();
-      if (jsonObj.has("local_names"))
-        nameInSpanish = jsonObj.get("local_names").getAsJsonObject().get("es").getAsString();
-
-
+      String lat = geoLocInfo[0],
+              lon = geoLocInfo[1],
+              nameInSpanish = geoLocInfo[2];
 
       // 11.-- REQUEST PARA OBTENER DATOS DEL CLIMA (API WEATHER)
       HttpRequest weatherRequest = HttpRequest.newBuilder()
@@ -181,7 +167,7 @@ public class Main {
 
       // 13.-- MOSTRAR INFORMACION DEL CLIMA AL USUARIO
       WeatherInfo weatherInfo = new WeatherInfo(nameInSpanish, condClimMain, condClimDesc, volumenLluvia, temp, maxTemp, minTemp);
-      showWeatherInfo(weatherInfo);
+      weatherInfo.showInfo();
 
       // VARIABLES DE CONTROL DEL FLUJO RESETEADAS
       System.out.println("\n");
@@ -223,68 +209,28 @@ public class Main {
   public static boolean apiKeyExists (String apiKeyString) {
     return !(apiKeyString == null || apiKeyString.isEmpty());
   }
-  public static void showWeatherInfo (WeatherInfo weatherInfo) {
-    System.out.printf("""
-            =============== RETRIEVED INFORMATION ===============
-            ciudad: %s
-            condicion: %s
-            descripción: %s
-            precipitación: %s
-            temperatura actual: %s
-            temperatura maxima: %s
-            temperatura minima: %s""",
-            weatherInfo.getCityName(),
-            weatherInfo.getConditionMain(),
-            weatherInfo.getConditionDescription(),
-            weatherInfo.getPrecipitationVolume(),
-            weatherInfo.getTemperature(),
-            weatherInfo.getMaxTemperature(),
-            weatherInfo.getMinTemperature());
+  public static String[] extractGeoLocData (String geolocBodyResponse) {
+    // parsear a jsonElement (manipulable, se puede convertir a tipos de datos json)
+    JsonElement jsonElement = JsonParser.parseString(geolocBodyResponse);
+
+    // parsear a array tipo json
+    JsonArray jsonArray = jsonElement.getAsJsonArray();
+
+    // si no hay informacion (no existe esa ciudad)
+    if (jsonArray.isEmpty())
+      return new String[]{};
+
+    JsonObject jsonObj = jsonArray.get(0).getAsJsonObject();
+
+    // Extraer datos del objeto tipo json como String's
+    String lat = jsonObj.get("lat").getAsString();
+    String lon = jsonObj.get("lon").getAsString();
+
+    String nameInSpanish = jsonObj.get("name").getAsString();
+    if (jsonObj.has("local_names"))
+      nameInSpanish = jsonObj.get("local_names").getAsJsonObject().get("es").getAsString();
+
+    return new String[]{lat,lon,nameInSpanish};
   }
 }
 
-class WeatherInfo {
-  private String cityName;
-  private String conditionMain;
-  private String conditionDescription;
-  private String precipitationVolume;
-  private String temperature;
-  private String maxTemperature;
-  private String minTemperature;
-  public WeatherInfo(String cityName, String conditionMain, String conditionDescription, String precipitationVolume, String temperature, String maxTemperature, String minTemperature) {
-    this.cityName = cityName;
-    this.conditionMain = conditionMain;
-    this.conditionDescription = conditionDescription;
-    this.precipitationVolume = precipitationVolume;
-    this.temperature = temperature;
-    this.maxTemperature = maxTemperature;
-    this.minTemperature = minTemperature;
-  }
-  public String getCityName() {
-    return this.cityName;
-  }
-
-  public String getConditionMain() {
-    return this.conditionMain;
-  }
-
-  public String getConditionDescription() {
-    return this.conditionDescription;
-  }
-
-  public String getPrecipitationVolume() {
-    return this.precipitationVolume;
-  }
-
-  public String getTemperature() {
-    return this.temperature;
-  }
-
-  public String getMaxTemperature() {
-    return this.maxTemperature;
-  }
-
-  public String getMinTemperature() {
-    return this.minTemperature;
-  }
-}
