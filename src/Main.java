@@ -85,14 +85,7 @@ public class Main {
               cityNameFormatted+
               "&limit=1&appid="+apiKey;
 
-      HttpClient client = HttpClient.newHttpClient();
-
-      HttpRequest geoLocRequest = HttpRequest.newBuilder()
-              .uri(URI.create(URLgeoLocReq))
-              .build();
-
-      HttpResponse<String> geoLocResponse = client.send(geoLocRequest, HttpResponse.BodyHandlers.ofString());
-      String geoLocData = geoLocResponse.body();
+      String geoLocData =  fetchCityCoordinates(URLgeoLocReq);
       //=======================================================================================================
 
       // 10.-- EXTRAER COORDENADAS DE LA RESPUESTA (API GEO LOC)
@@ -118,6 +111,7 @@ public class Main {
                       "&lang=sp&units=metric"))
               .build();
 
+      HttpClient client = HttpClient.newHttpClient();
       HttpResponse<String> weatherResponse = client.send(weatherRequest, HttpResponse.BodyHandlers.ofString());
 
       String weatherData = weatherResponse.body();
@@ -237,6 +231,17 @@ public class Main {
             .getAsString();
 
     return new WeatherInfo(cityName,condClimMain,condClimDesc,volumenLluvia,temp,minTemp,maxTemp);
+  }
+  public static String fetchCityCoordinates (String apiURL) throws IOException, InterruptedException {
+
+    HttpClient client = HttpClient.newHttpClient();
+
+    HttpRequest geoLocRequest = HttpRequest.newBuilder()
+            .uri(URI.create(apiURL))
+            .build();
+
+    HttpResponse<String> geoLocResponse = client.send(geoLocRequest, HttpResponse.BodyHandlers.ofString());
+    return geoLocResponse.body();
   }
 }
 
