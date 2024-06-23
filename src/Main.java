@@ -73,9 +73,8 @@ public class Main {
       }
 
       // FORMATEAR EL NOMBRE DE CIUDAD VALIDO PARA LA REQUEST
-      cityName = capitalizePhrase(cityName);
+      cityName = capitalizePhrase(cityName).trim();
       String cityNameFormatted = URLEncoder.encode(cityName, StandardCharsets.UTF_8);
-      // FALTA UN TRIM
 
     // TRAER DATOS DE LA API
 
