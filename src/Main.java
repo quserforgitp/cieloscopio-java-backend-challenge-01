@@ -106,6 +106,7 @@ public class Main {
       if (jsonArray.isEmpty()) {
         System.err.println("No se encontró información con el nombre de ciudad introducido: " + cityName);
         opt = 0;
+        cityName = "";
         continue;
       }
 
