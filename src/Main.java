@@ -80,13 +80,13 @@ public class Main {
 
 
       // 9.-- REQUEST PARA TRAER LAS COORDENADAS DE LA CIUDAD
-      //=====================================================
+
       String URLgeoLocReq = "http://api.openweathermap.org/geo/1.0/direct?q="+
               cityNameFormatted+
               "&limit=1&appid="+apiKey;
 
       String geoLocData =  fetchCityCoordinates(URLgeoLocReq);
-      //=======================================================================================================
+
 
       // 10.-- EXTRAER COORDENADAS DE LA RESPUESTA (API GEO LOC)
 
@@ -180,7 +180,8 @@ public class Main {
 
     String nameInSpanish = jsonObj.get("name").getAsString();
     if (jsonObj.has("local_names"))
-      nameInSpanish = jsonObj.get("local_names").getAsJsonObject().get("es").getAsString();
+      if(jsonObj.get("local_names").getAsJsonObject().has("es"))
+        nameInSpanish = jsonObj.get("local_names").getAsJsonObject().get("es").getAsString();
 
     return new String[]{lat,lon,nameInSpanish};
   }
