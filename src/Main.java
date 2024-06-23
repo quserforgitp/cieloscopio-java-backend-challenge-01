@@ -80,6 +80,7 @@ public class Main {
 
 
       // 9.-- REQUEST PARA TRAER LAS COORDENADAS DE LA CIUDAD
+      //=====================================================
       String URLgeoLocReq = "http://api.openweathermap.org/geo/1.0/direct?q="+
               cityNameFormatted+
               "&limit=1&appid="+apiKey;
@@ -92,6 +93,7 @@ public class Main {
 
       HttpResponse<String> geoLocResponse = client.send(geoLocRequest, HttpResponse.BodyHandlers.ofString());
       String geoLocData = geoLocResponse.body();
+      //=======================================================================================================
 
       // 10.-- EXTRAER COORDENADAS DE LA RESPUESTA (API GEO LOC)
 
@@ -120,53 +122,9 @@ public class Main {
 
       String weatherData = weatherResponse.body();
 
-      JsonObject weatherJsonObj = JsonParser
-              .parseString(weatherData)
-              .getAsJsonObject();
-
-      // 12.-- EXTRAER DATOS DEL CLIMA DE LA RESPUESTA
-      JsonObject condClimJsonObj = weatherJsonObj
-              .get("weather")
-              .getAsJsonArray()
-              .get(0)
-              .getAsJsonObject();
-
-      // EXTRAER CONDICIONES DEL CLIMA
-      String condClimMain = condClimJsonObj
-              .get("main")
-              .getAsString();
-      String condClimDesc = condClimJsonObj
-              .get("description")
-              .getAsString();
-
-      String volumenLluvia = "...";
-
-      // si hay informacion de la lluvia, entonces setear a variable
-      if (weatherJsonObj.has("rain")) {
-        JsonObject lluviaJsonObj = weatherJsonObj.get("rain").getAsJsonObject();
-
-        volumenLluvia = lluviaJsonObj.has("1h") ?
-                lluviaJsonObj.get("1h").getAsString() :
-                lluviaJsonObj.get("3h").getAsString();
-        volumenLluvia += " Lts por metro cúbico";
-      }
-
-      // EXTRAER TEMPERATURAS
-      JsonObject tempJsonObj = weatherJsonObj
-              .get("main")
-              .getAsJsonObject();
-      String temp = tempJsonObj
-              .get("temp")
-              .getAsString();
-      String minTemp = tempJsonObj
-              .get("temp_min")
-              .getAsString();
-      String maxTemp = tempJsonObj
-              .get("temp_max")
-              .getAsString();
-
       // 13.-- MOSTRAR INFORMACION DEL CLIMA AL USUARIO
-      WeatherInfo weatherInfo = new WeatherInfo(nameInSpanish, condClimMain, condClimDesc, volumenLluvia, temp, maxTemp, minTemp);
+      WeatherInfo weatherInfo = extractWeatherData(weatherData, nameInSpanish);
+
       weatherInfo.showInfo();
 
       // VARIABLES DE CONTROL DEL FLUJO RESETEADAS
@@ -231,6 +189,54 @@ public class Main {
       nameInSpanish = jsonObj.get("local_names").getAsJsonObject().get("es").getAsString();
 
     return new String[]{lat,lon,nameInSpanish};
+  }
+  public static WeatherInfo extractWeatherData(String weatherBodyResponse, String cityName) {
+
+    JsonObject weatherJsonObj = JsonParser
+            .parseString(weatherBodyResponse)
+            .getAsJsonObject();
+
+    JsonObject condClimJsonObj = weatherJsonObj
+            .get("weather")
+            .getAsJsonArray()
+            .get(0)
+            .getAsJsonObject();
+
+    // EXTRAER CONDICIONES DEL CLIMA
+    String condClimMain = condClimJsonObj
+            .get("main")
+            .getAsString();
+    String condClimDesc = condClimJsonObj
+            .get("description")
+            .getAsString();
+
+    String volumenLluvia = "...";
+
+    // si hay informacion de la lluvia, entonces setear a variable
+    if (weatherJsonObj.has("rain")) {
+      JsonObject lluviaJsonObj = weatherJsonObj.get("rain").getAsJsonObject();
+
+      volumenLluvia = lluviaJsonObj.has("1h") ?
+              lluviaJsonObj.get("1h").getAsString() :
+              lluviaJsonObj.get("3h").getAsString();
+      volumenLluvia += " Lts por metro cúbico";
+    }
+
+    // EXTRAER TEMPERATURAS
+    JsonObject tempJsonObj = weatherJsonObj
+            .get("main")
+            .getAsJsonObject();
+    String temp = tempJsonObj
+            .get("temp")
+            .getAsString();
+    String minTemp = tempJsonObj
+            .get("temp_min")
+            .getAsString();
+    String maxTemp = tempJsonObj
+            .get("temp_max")
+            .getAsString();
+
+    return new WeatherInfo(cityName,condClimMain,condClimDesc,volumenLluvia,temp,minTemp,maxTemp);
   }
 }
 
