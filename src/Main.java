@@ -35,15 +35,16 @@ public class Main {
     String cityName = "";
     String onlyNamesRgx = "[a-zA-Z\\s]+";
     int opt = 0;
+
     // BUCLE APP
-    while(opt < 1 || opt > 7) {
+    while(optionIsOutOfRange(opt)) {
     // MOSTRAR MENU
       showMenu();
     // OBTENER OPCION INGRESADA POR teclado
       try {
         opt = input.nextInt();
         input.nextLine();// Limpriar el buffer del scanner
-        if (opt < 1 || opt > 7) {// numero fuera de rango
+        if (optionIsOutOfRange(opt)) {// numero fuera de rango
           System.err.println("El número introducido está fuera del rango permitido!!");
           continue;
         }
@@ -252,5 +253,9 @@ public class Main {
     return URLEncoder.encode(text, StandardCharsets.UTF_8);
     //==============================================================================================================
   }
+  public static boolean optionIsOutOfRange (int selectedOption) {
+    return selectedOption < 1 || selectedOption > 7;
+  }
+
 }
 
