@@ -27,27 +27,28 @@ public class Main {
       try {
     // MOSTRAR MENU Y OBTENER OPCION INGRESADA POR TECLADO
         opt = Menu.showAndPromptUser();
+
+        switch (opt) {
+          case Menu.OP_INGRESAR_NOMBRE_CIUDAD:
+            while (isNotValidCityName(cityName)) {
+              try {
+                cityName = Menu.promptForCityName();
+              } catch (NameOfCityIsBlankException e) {
+                System.err.println("Es necesario que se ingrese el nombre de una ciudad...");
+              } catch (NotValidNameOfCityException e) {
+                System.err.println("No se aceptan caracteres extraños, ni numeros...");
+              }
+            }
+            break;
+          default:
+            cityName = getCityNameBasedOnOpt(opt);
+        }
       } catch (InputMismatchException e) {// se introdujo un numero o caracter extranio
         System.err.println("Entrada no válida. Por favor, introduzca un número.");
         continue;
       } catch (IllegalArgumentException e) {
         System.err.println("El número introducido está fuera del rango permitido!!");
         continue;
-      }
-
-      if (opt == Menu.OP_INGRESAR_NOMBRE_CIUDAD) {
-        // While pedir nombre de ciudad valido
-        while (isNotValidCityName(cityName)) {
-          try {
-            cityName = Menu.promptForCityName();
-          } catch (NameOfCityIsBlankException e) {
-            System.err.println("Es necesario que se ingrese el nombre de una ciudad...");
-          } catch (NotValidNameOfCityException e) {
-            System.err.println("No se aceptan caracteres extraños, ni numeros...");
-          }
-        }
-      } else {// se selecciono un nombre de ciudad hardcodeado
-        cityName = getCityNameBasedOnOpt(opt);
       }
 
       // FORMATEAR EL NOMBRE DE CIUDAD VALIDO PARA LA REQUEST
