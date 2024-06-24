@@ -8,7 +8,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
@@ -21,14 +20,6 @@ public class Main {
       System.err.println("No se encontró la API key. Asegúrate de definir la variable de entorno OPENWEATHERMAP_API_KEY.");
       return;
     }
-
-    // DEFINICION DE NOMBRES DE CIUDADES HARDCODEADOS
-    ArrayList<String> cityNames = new ArrayList<>();
-    cityNames.add("Morelia");
-    cityNames.add("Caracas");
-    cityNames.add("Buenos Aires");
-    cityNames.add("Brasilia");
-    cityNames.add("Quito");
 
     // VARIABLES/OBJS de la app
     Scanner input = new Scanner(System.in);
@@ -69,7 +60,7 @@ public class Main {
         System.out.println("Usted escogio salir, fin del programa...");
         return;
       } else {// se selecciono un nombre de ciudad hardcodeado
-        cityName = cityNames.get(opt - 1);
+        cityName = getCityNameBasedOnOpt(opt);
       }
 
       //==============================================================================================================
@@ -262,5 +253,26 @@ public class Main {
     System.out.println(msg);
     System.out.printf("%s",promptChars);
   }
+  public static String getCityNameBasedOnOpt (int option) {
+    return City.values()[option - 1].getName();
+  }
 }
+enum City {
+  MORELIA("Morelia"),
+  CARACAS("Caracas"),
+  BUENOS_AIRES("Buenos Aires"),
+  BRASILIA("Brasilia"),
+  QUITO("Quito");
+
+  private final String name;
+
+  City(String name) {
+    this.name = name;
+  }
+
+  public String getName() {
+    return name;
+  }
+}
+
 
