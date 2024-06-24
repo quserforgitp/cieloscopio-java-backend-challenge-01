@@ -56,7 +56,7 @@ public class Main {
       // Se selecciono, introducir manualmente el nombre de la ciudad
       if (opt == 6) {
         // While pedir nombre de ciudad valido
-        while (cityName.isBlank() || !cityName.matches(onlyNamesRgx)) {
+        while (isNotValidCityName(cityName)) {
           System.out.println("Ingrese el nombre de la ciudad");
           System.out.printf("> ");
           cityName = input.nextLine();
@@ -256,6 +256,9 @@ public class Main {
   public static boolean optionIsOutOfRange (int selectedOption) {
     return selectedOption < 1 || selectedOption > 7;
   }
-
+  public static boolean isNotValidCityName(String cityName) {
+    String onlyNamesRgx = "[a-zA-Z\\s]+";
+    return cityName.isBlank() || !cityName.matches(onlyNamesRgx);
+  }
 }
 
