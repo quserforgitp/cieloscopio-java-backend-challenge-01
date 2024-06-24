@@ -15,11 +15,9 @@ public class Main {
   public static void main(String[] args) throws IOException, InterruptedException {
 
     // COMPROBACIONES antes de iniciar el programa
+    checkPrerequisitesOrAbort();
+
     String apiKey = System.getenv("OPENWEATHERMAP_API_KEY");
-    if (!apiKeyExists(apiKey)) {
-      System.err.println("No se encontró la API key. Asegúrate de definir la variable de entorno OPENWEATHERMAP_API_KEY.");
-      return;
-    }
 
     // VARIABLES/OBJS de la app
     Scanner input = new Scanner(System.in);
@@ -256,6 +254,14 @@ public class Main {
   public static String getCityNameBasedOnOpt (int option) {
     return City.values()[option - 1].getName();
   }
+  public static void checkPrerequisitesOrAbort() {
+    String apiKey = System.getenv("OPENWEATHERMAP_API_KEY");
+    if (!apiKeyExists(apiKey)) {
+      System.err.println("API key not found. Please set the environment variable OPENWEATHERMAP_API_KEY.");
+      System.exit(1);  // Aborts the program
+    }
+  }
+
 }
 enum City {
   MORELIA("Morelia"),
