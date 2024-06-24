@@ -57,8 +57,7 @@ public class Main {
       if (opt == 6) {
         // While pedir nombre de ciudad valido
         while (isNotValidCityName(cityName)) {
-          System.out.println("Ingrese el nombre de la ciudad");
-          System.out.printf("> ");
+          promptUser("Ingrese el nombre de la ciudad","> ");
           cityName = input.nextLine();
           if (cityName.isBlank()) {
             System.err.println("Es necesario que se ingrese el nombre de una ciudad...");
@@ -130,8 +129,7 @@ public class Main {
             | 7. Salir                                            |
             ========================================================
             """);
-    System.out.println("ingrese una opción");
-    System.out.printf("> ");
+    promptUser("Ingrese una opción", "> ");
 
   }
   public static String capitalizePhrase (String phrase) {
@@ -259,6 +257,10 @@ public class Main {
   public static boolean isNotValidCityName(String cityName) {
     String onlyNamesRgx = "[a-zA-Z\\s]+";
     return cityName.isBlank() || !cityName.matches(onlyNamesRgx);
+  }
+  public static void promptUser(String msg, String promptChars) {
+    System.out.println(msg);
+    System.out.printf("%s",promptChars);
   }
 }
 
