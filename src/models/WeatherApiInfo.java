@@ -1,6 +1,6 @@
 package models;
 
-public class WeatherInfo {
+public class WeatherApiInfo {
   private String cityName;
   private String conditionMain;
   private String conditionDescription;
@@ -8,7 +8,7 @@ public class WeatherInfo {
   private String temperature;
   private String maxTemperature;
   private String minTemperature;
-  public WeatherInfo(String cityName, String conditionMain, String conditionDescription, String precipitationVolume, String temperature, String maxTemperature, String minTemperature) {
+  public WeatherApiInfo(String cityName, String conditionMain, String conditionDescription, String precipitationVolume, String temperature, String maxTemperature, String minTemperature) {
     this.cityName = cityName;
     this.conditionMain = conditionMain;
     this.conditionDescription = conditionDescription;

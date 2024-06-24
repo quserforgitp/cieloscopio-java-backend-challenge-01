@@ -2,7 +2,7 @@ import com.google.gson.*;
 import exceptions.NameOfCityIsBlankException;
 import exceptions.NotValidNameOfCityException;
 import models.GeoLocApiInfo;
-import models.WeatherInfo;
+import models.WeatherApiInfo;
 
 import static utils.Utils.*;
 
@@ -64,11 +64,7 @@ public class Main {
               cityNameFormatted+
               "&limit=1&appid="+apiKey;
 
-      String geoLocData = fetchCityCoordinates(URLgeoLocReq);// => response.body()
-
-    // EXTRAER DATOS DE COORDENADAS Y NOMBRE EN ESPANIOL DE LA CIUDAD (API GEO LOC)
-
-      GeoLocApiInfo geoLocApiInfo = extractGeoLocData(geoLocData);// => {lat,lon,cityNameInSpanish}
+      GeoLocApiInfo geoLocApiInfo = getGeoLocData(URLgeoLocReq);
       // si la ciudad no existe
       if (geoLocApiInfo == null) {
         System.err.println("No se encontró información con el nombre de ciudad introducido: " + cityName);
@@ -83,10 +79,7 @@ public class Main {
               "&appid="+apiKey+
               "&lang=sp&units=metric";
 
-      String weatherData = fetchWeatherConditions(weatherURL);// => response.body()
-
-      WeatherInfo weatherInfo = extractWeatherData(weatherData, geoLocApiInfo);
-                  // => {nameInSpanish,condClimMain,condClimDesc,volumenLluvia,temp,minTemp,maxTemp}
+      WeatherApiInfo weatherInfo = getWeatherData(weatherURL,geoLocApiInfo);
 
       // MOSTRAR INFORMACION DEL CLIMA AL USUARIO
       weatherInfo.showInfo();
@@ -122,7 +115,7 @@ public class Main {
 
     return new GeoLocApiInfo(lat,lon,nameInSpanish);
   } // retrieve data
-  public static WeatherInfo extractWeatherData(String weatherBodyResponse, GeoLocApiInfo geoLocApiInfoObj) {
+  public static WeatherApiInfo extractWeatherData(String weatherBodyResponse, GeoLocApiInfo geoLocApiInfoObj) {
 
     JsonObject weatherJsonObj = JsonParser
             .parseString(weatherBodyResponse)
@@ -168,7 +161,7 @@ public class Main {
             .get("temp_max")
             .getAsString();
 
-    return new WeatherInfo(geoLocApiInfoObj.getCityNameInSpanish(),condClimMain,condClimDesc,volumenLluvia,temp,minTemp,maxTemp);
+    return new WeatherApiInfo(geoLocApiInfoObj.getCityNameInSpanish(),condClimMain,condClimDesc,volumenLluvia,temp,minTemp,maxTemp);
   } // retrieve data
   public static String fetchCityCoordinates (String apiURL) throws IOException, InterruptedException {
 
@@ -190,5 +183,11 @@ public class Main {
     HttpResponse<String> weatherResponse = client.send(weatherRequest, HttpResponse.BodyHandlers.ofString());
     return weatherResponse.body();
   } // retrieve data
+  public static GeoLocApiInfo getGeoLocData(String apiURL) throws IOException, InterruptedException {
+    return extractGeoLocData(fetchCityCoordinates(apiURL));
+  }
+  public static WeatherApiInfo getWeatherData(String apiURL, GeoLocApiInfo geoLocData) throws IOException, InterruptedException {
+    return extractWeatherData(fetchWeatherConditions(apiURL),geoLocData);
+  }
 }
 
