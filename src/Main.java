@@ -1,21 +1,24 @@
 import com.google.gson.*;
+import exceptions.NameOfCityIsBlankException;
+import exceptions.NotValidNameOfCityException;
+import models.GeoLocApiInfo;
+import models.WeatherInfo;
+
+import static utils.Utils.*;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
-import java.nio.charset.StandardCharsets;
 import java.util.InputMismatchException;
-import java.util.Scanner;
 
 public class Main {
   public static void main(String[] args) throws IOException, InterruptedException {
 
     // COMPROBACIONES antes de iniciar el programa
-    checkPrerequisitesOrAbort();// utils
+    checkPrerequisitesOrAbort();
     String apiKey = System.getenv("OPENWEATHERMAP_API_KEY");
 
     // VARIABLES/OBJS de la app
@@ -34,9 +37,9 @@ public class Main {
               try {
                 cityName = Menu.promptForCityName();
               } catch (NameOfCityIsBlankException e) {
-                System.err.println("Es necesario que se ingrese el nombre de una ciudad...");
+                printErrorInConsole("Es necesario que se ingrese el nombre de una ciudad...");
               } catch (NotValidNameOfCityException e) {
-                System.err.println("No se aceptan caracteres extraños, ni numeros...");
+                printErrorInConsole("No se aceptan caracteres extraños, ni numeros...");
               }
             }
             break;
@@ -44,10 +47,10 @@ public class Main {
             cityName = getCityNameBasedOnOpt(opt);
         }
       } catch (InputMismatchException e) {// se introdujo un numero o caracter extranio
-        System.err.println("Entrada no válida. Por favor, introduzca un número.");
+        printErrorInConsole("Entrada no válida. Por favor, introduzca un número.");
         continue;
       } catch (IllegalArgumentException e) {
-        System.err.println("El número introducido está fuera del rango permitido!!");
+        printErrorInConsole("El número introducido está fuera del rango permitido!!");
         continue;
       }
 
@@ -94,40 +97,6 @@ public class Main {
       cityName = "";
     }
   }
-  public static void showMenu () {
-    System.out.println("""
-            ========================= MENÚ =========================
-            | 1. Morelia (mx)                                     |
-            | 2. Caracas (vnz)                                    |
-            | 3. Buenos Aires (arg)                               |
-            | 4. Brasilia (br)                                    |
-            | 5. Quito (ec)                                       |
-            | 6. Introducir nombre manualmente                    |
-            | 7. Salir                                            |
-            ========================================================
-            """);
-    promptUser("Ingrese una opción", "> ");
-
-  }
-  public static String capitalizePhrase (String phrase) {
-
-    phrase = phrase.trim();
-    String mutablePhrase = phrase.substring(0);
-
-    String splittedPhrase[] = mutablePhrase.split(" ");
-    String reJoinedPhrase = "";
-
-    for (String word : splittedPhrase) {
-      word = word.substring(0,1).toUpperCase() + word.substring(1).toLowerCase();
-      reJoinedPhrase += word + " ";
-    }
-    reJoinedPhrase = reJoinedPhrase.substring(0,reJoinedPhrase.length());
-
-    return reJoinedPhrase;
-  }
-  public static boolean apiKeyExists (String apiKeyString) {
-    return !(apiKeyString == null || apiKeyString.isEmpty());
-  }
   public static GeoLocApiInfo extractGeoLocData (String geolocBodyResponse) {
 
     // parsear a jsonElement (manipulable, se puede convertir a tipos de datos json)
@@ -152,7 +121,7 @@ public class Main {
         nameInSpanish = jsonObj.get("local_names").getAsJsonObject().get("es").getAsString();
 
     return new GeoLocApiInfo(lat,lon,nameInSpanish);
-  }
+  } // retrieve data
   public static WeatherInfo extractWeatherData(String weatherBodyResponse, GeoLocApiInfo geoLocApiInfoObj) {
 
     JsonObject weatherJsonObj = JsonParser
@@ -200,7 +169,7 @@ public class Main {
             .getAsString();
 
     return new WeatherInfo(geoLocApiInfoObj.getCityNameInSpanish(),condClimMain,condClimDesc,volumenLluvia,temp,minTemp,maxTemp);
-  }
+  } // retrieve data
   public static String fetchCityCoordinates (String apiURL) throws IOException, InterruptedException {
 
     HttpClient client = HttpClient.newHttpClient();
@@ -211,7 +180,7 @@ public class Main {
 
     HttpResponse<String> geoLocResponse = client.send(geoLocRequest, HttpResponse.BodyHandlers.ofString());
     return geoLocResponse.body();
-  }
+  } // retrieve data
   public static String fetchWeatherConditions (String apiURL) throws IOException, InterruptedException {
     HttpRequest weatherRequest = HttpRequest.newBuilder()
             .uri(URI.create(apiURL))
@@ -220,114 +189,6 @@ public class Main {
     HttpClient client = HttpClient.newHttpClient();
     HttpResponse<String> weatherResponse = client.send(weatherRequest, HttpResponse.BodyHandlers.ofString());
     return weatherResponse.body();
-  }
-  public static String formatTextAndURLencode (String text) {
-    //==============================================================================================================
-    // FORMATEAR EL NOMBRE DE CIUDAD VALIDO PARA LA REQUEST
-    text = capitalizePhrase(text);
-    return URLEncoder.encode(text, StandardCharsets.UTF_8);
-    //==============================================================================================================
-  }
-  public static boolean isNotValidCityName(String cityName) {
-    String onlyNamesRgx = "[a-zA-Z\\s]+";
-    return cityName.isBlank() || !cityName.matches(onlyNamesRgx);
-  }// utils
-  public static void promptUser(String msg, String promptChars) {
-    System.out.println(msg);
-    System.out.printf("%s",promptChars);
-  }
-  public static String getCityNameBasedOnOpt (int option) {
-    return City.values()[option - 1].getName();
-  }
-  public static boolean optionIsOutOfRange (int selectedOption) {
-    return selectedOption < 1 || selectedOption > 7;
-  }
-  public static void checkPrerequisitesOrAbort() {
-    String apiKey = System.getenv("OPENWEATHERMAP_API_KEY");
-    if (!apiKeyExists(apiKey)) {
-      System.err.println("API key not found. Please set the environment variable OPENWEATHERMAP_API_KEY.");
-      System.exit(1);  // Aborts the program
-    }
-  }
-
+  } // retrieve data
 }
-class Menu {
-  public static final int OP_INGRESAR_NOMBRE_CIUDAD = 6;
-  public static final int OP_SALIR = 7;
-  public static void promptUser(String msg, String promptChars) {
-    System.out.println(msg);
-    System.out.printf("%s",promptChars);
-  }// utils
-  public static int showAndPromptUser() {
-    Scanner input = new Scanner(System.in);
 
-    System.out.println("""
-            ========================= MENÚ =========================
-            | 1. Morelia (mx)                                     |
-            | 2. Caracas (vnz)                                    |
-            | 3. Buenos Aires (arg)                               |
-            | 4. Brasilia (br)                                    |
-            | 5. Quito (ec)                                       |
-            | 6. Introducir nombre manualmente                    |
-            | 7. Salir                                            |
-            ========================================================
-            """);
-    promptUser("Ingrese una opción", "> ");
-    int opt = 0;
-    try {
-      opt = input.nextInt();
-      if(optionIsOutOfRange(opt)) throw new IllegalArgumentException();
-    }catch (IllegalArgumentException e) {
-      throw e;
-    } finally {
-      input.nextLine();// Limpiar el buffer del scanner
-    }
-    if (opt == OP_SALIR) {
-      System.out.println("Usted escogio salir, fin del programa...");
-      System.exit(0);
-    }
-    return opt;
-  }
-  public static String promptForCityName() throws NameOfCityIsBlankException, NotValidNameOfCityException {
-    Scanner input = new Scanner(System.in);
-    String onlyNamesRgx = "[a-zA-Z\\s]+";
-    String cityName = "";
-    promptUser("Ingrese el nombre de la ciudad","> ");
-    cityName = input.nextLine();
-
-    if (cityName.isBlank()) throw new NameOfCityIsBlankException();
-      else if (!cityName.matches(onlyNamesRgx)) throw new NotValidNameOfCityException();
-
-    return cityName;
-  }
-  public static boolean optionIsOutOfRange (int selectedOption) {
-    return selectedOption < 1 || selectedOption > 7;
-  }// utils
-}
-enum City {
-  MORELIA("Morelia"),
-  CARACAS("Caracas"),
-  BUENOS_AIRES("Buenos Aires"),
-  BRASILIA("Brasilia"),
-  QUITO("Quito");
-
-  private final String name;
-
-  City(String name) {
-    this.name = name;
-  }
-
-  public String getName() {
-    return name;
-  }
-}
-class NameOfCityIsBlankException extends Exception {
-  NameOfCityIsBlankException() {
-    super();
-  }
-}
-class NotValidNameOfCityException extends Exception {
-  NotValidNameOfCityException() {
-    super();
-  }
-}

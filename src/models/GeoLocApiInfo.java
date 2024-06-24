@@ -1,3 +1,5 @@
+package models;
+
 public class GeoLocApiInfo {
   private String lat;
   private String lon;

@@ -1,3 +1,5 @@
+package models;
+
 public class WeatherInfo {
   private String cityName;
   private String conditionMain;
