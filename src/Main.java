@@ -1,6 +1,7 @@
 import com.google.gson.*;
 import exceptions.NameOfCityIsBlankException;
 import exceptions.NotValidNameOfCityException;
+import menu.Menu;
 import models.GeoLocApiInfo;
 import models.WeatherApiInfo;
 

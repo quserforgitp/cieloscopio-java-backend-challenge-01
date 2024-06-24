@@ -1,3 +1,5 @@
+package menu;
+
 import exceptions.NameOfCityIsBlankException;
 import exceptions.NotValidNameOfCityException;
 
