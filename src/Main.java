@@ -72,9 +72,10 @@ public class Main {
         cityName = cityNames.get(opt - 1);
       }
 
+      //==============================================================================================================
       // FORMATEAR EL NOMBRE DE CIUDAD VALIDO PARA LA REQUEST
-      cityName = capitalizePhrase(cityName).trim();
-      String cityNameFormatted = URLEncoder.encode(cityName, StandardCharsets.UTF_8);
+      String cityNameFormatted = formatTextAndURLencode(cityName);
+      //==============================================================================================================
 
     // TRAER DATOS DE LA API
 
@@ -134,6 +135,7 @@ public class Main {
   }
   public static String capitalizePhrase (String phrase) {
 
+    phrase = phrase.trim();
     String mutablePhrase = phrase.substring(0);
 
     String splittedPhrase[] = mutablePhrase.split(" ");
@@ -242,6 +244,13 @@ public class Main {
     HttpClient client = HttpClient.newHttpClient();
     HttpResponse<String> weatherResponse = client.send(weatherRequest, HttpResponse.BodyHandlers.ofString());
     return weatherResponse.body();
+  }
+  public static String formatTextAndURLencode (String text) {
+    //==============================================================================================================
+    // FORMATEAR EL NOMBRE DE CIUDAD VALIDO PARA LA REQUEST
+    text = capitalizePhrase(text);
+    return URLEncoder.encode(text, StandardCharsets.UTF_8);
+    //==============================================================================================================
   }
 }
 
