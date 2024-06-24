@@ -15,56 +15,43 @@ public class Main {
   public static void main(String[] args) throws IOException, InterruptedException {
 
     // COMPROBACIONES antes de iniciar el programa
-    checkPrerequisitesOrAbort();
-
+    checkPrerequisitesOrAbort();// utils
     String apiKey = System.getenv("OPENWEATHERMAP_API_KEY");
 
     // VARIABLES/OBJS de la app
-    Scanner input = new Scanner(System.in);
     String cityName = "";
-    String onlyNamesRgx = "[a-zA-Z\\s]+";
     int opt = 0;
 
     // BUCLE APP
     while(optionIsOutOfRange(opt)) {
-    // MOSTRAR MENU
-      showMenu();
-    // OBTENER OPCION INGRESADA POR teclado
       try {
-        opt = input.nextInt();
-        input.nextLine();// Limpriar el buffer del scanner
-        if (optionIsOutOfRange(opt)) {// numero fuera de rango
-          System.err.println("El número introducido está fuera del rango permitido!!");
-          continue;
-        }
+    // MOSTRAR MENU Y OBTENER OPCION INGRESADA POR TECLADO
+        opt = Menu.showAndPromptUser();
       } catch (InputMismatchException e) {// se introdujo un numero o caracter extranio
         System.err.println("Entrada no válida. Por favor, introduzca un número.");
-        input.next(); // Limpiar el buffer del scanner
+        continue;
+      } catch (IllegalArgumentException e) {
+        System.err.println("El número introducido está fuera del rango permitido!!");
         continue;
       }
-      // Se selecciono, introducir manualmente el nombre de la ciudad
-      if (opt == 6) {
+
+      if (opt == Menu.OP_INGRESAR_NOMBRE_CIUDAD) {
         // While pedir nombre de ciudad valido
         while (isNotValidCityName(cityName)) {
-          promptUser("Ingrese el nombre de la ciudad","> ");
-          cityName = input.nextLine();
-          if (cityName.isBlank()) {
+          try {
+            cityName = Menu.promptForCityName();
+          } catch (NameOfCityIsBlankException e) {
             System.err.println("Es necesario que se ingrese el nombre de una ciudad...");
-          } else if (!cityName.matches(onlyNamesRgx)) {
+          } catch (NotValidNameOfCityException e) {
             System.err.println("No se aceptan caracteres extraños, ni numeros...");
           }
         }
-      } else if(opt == 7) {// se selecciono SAlir de la app
-        System.out.println("Usted escogio salir, fin del programa...");
-        return;
       } else {// se selecciono un nombre de ciudad hardcodeado
         cityName = getCityNameBasedOnOpt(opt);
       }
 
-      //==============================================================================================================
       // FORMATEAR EL NOMBRE DE CIUDAD VALIDO PARA LA REQUEST
       String cityNameFormatted = formatTextAndURLencode(cityName);
-      //==============================================================================================================
 
     // TRAER DATOS DE LA API
 
@@ -100,7 +87,7 @@ public class Main {
       // MOSTRAR INFORMACION DEL CLIMA AL USUARIO
       weatherInfo.showInfo();
 
-      // VARIABLES DE CONTROL DEL FLUJO RESETEADAS
+      // VARIABLES DE CONTROL DE FLUJO RESETEADAS
       System.out.println("\n");
       opt = 0;
       cityName = "";
@@ -240,19 +227,19 @@ public class Main {
     return URLEncoder.encode(text, StandardCharsets.UTF_8);
     //==============================================================================================================
   }
-  public static boolean optionIsOutOfRange (int selectedOption) {
-    return selectedOption < 1 || selectedOption > 7;
-  }
   public static boolean isNotValidCityName(String cityName) {
     String onlyNamesRgx = "[a-zA-Z\\s]+";
     return cityName.isBlank() || !cityName.matches(onlyNamesRgx);
-  }
+  }// utils
   public static void promptUser(String msg, String promptChars) {
     System.out.println(msg);
     System.out.printf("%s",promptChars);
   }
   public static String getCityNameBasedOnOpt (int option) {
     return City.values()[option - 1].getName();
+  }
+  public static boolean optionIsOutOfRange (int selectedOption) {
+    return selectedOption < 1 || selectedOption > 7;
   }
   public static void checkPrerequisitesOrAbort() {
     String apiKey = System.getenv("OPENWEATHERMAP_API_KEY");
@@ -262,6 +249,59 @@ public class Main {
     }
   }
 
+}
+class Menu {
+  public static final int OP_INGRESAR_NOMBRE_CIUDAD = 6;
+  public static final int OP_SALIR = 7;
+  public static void promptUser(String msg, String promptChars) {
+    System.out.println(msg);
+    System.out.printf("%s",promptChars);
+  }// utils
+  public static int showAndPromptUser() {
+    Scanner input = new Scanner(System.in);
+
+    System.out.println("""
+            ========================= MENÚ =========================
+            | 1. Morelia (mx)                                     |
+            | 2. Caracas (vnz)                                    |
+            | 3. Buenos Aires (arg)                               |
+            | 4. Brasilia (br)                                    |
+            | 5. Quito (ec)                                       |
+            | 6. Introducir nombre manualmente                    |
+            | 7. Salir                                            |
+            ========================================================
+            """);
+    promptUser("Ingrese una opción", "> ");
+    int opt = 0;
+    try {
+      opt = input.nextInt();
+      if(optionIsOutOfRange(opt)) throw new IllegalArgumentException();
+    }catch (IllegalArgumentException e) {
+      throw e;
+    } finally {
+      input.nextLine();// Limpiar el buffer del scanner
+    }
+    if (opt == OP_SALIR) {
+      System.out.println("Usted escogio salir, fin del programa...");
+      System.exit(0);
+    }
+    return opt;
+  }
+  public static String promptForCityName() throws NameOfCityIsBlankException, NotValidNameOfCityException {
+    Scanner input = new Scanner(System.in);
+    String onlyNamesRgx = "[a-zA-Z\\s]+";
+    String cityName = "";
+    promptUser("Ingrese el nombre de la ciudad","> ");
+    cityName = input.nextLine();
+
+    if (cityName.isBlank()) throw new NameOfCityIsBlankException();
+      else if (!cityName.matches(onlyNamesRgx)) throw new NotValidNameOfCityException();
+
+    return cityName;
+  }
+  public static boolean optionIsOutOfRange (int selectedOption) {
+    return selectedOption < 1 || selectedOption > 7;
+  }// utils
 }
 enum City {
   MORELIA("Morelia"),
@@ -280,5 +320,13 @@ enum City {
     return name;
   }
 }
-
-
+class NameOfCityIsBlankException extends Exception {
+  NameOfCityIsBlankException() {
+    super();
+  }
+}
+class NotValidNameOfCityException extends Exception {
+  NotValidNameOfCityException() {
+    super();
+  }
+}
