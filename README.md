@@ -6,7 +6,9 @@
 
 Este proyecto es una aplicación de consola en Java que permite obtener información meteorológica de varias ciudades utilizando la API de OpenWeatherMap.
 <p align="center">
-   <img src="https://img.shields.io/badge/STATUS-v1.0.0-green" width=20%>
+  <a href="https://github.com/quserforgitp/cieloscopio-java-backend-challenge-01/releases/tag/v1.0.2">
+    <img src="https://img.shields.io/badge/STATUS-v1.0.2-green" width=20%>
+  </a>
 </p>
 
 ## 🚀  Requisitos
@@ -21,10 +23,11 @@ Este proyecto es una aplicación de consola en Java que permite obtener informac
 
 ## 🏃‍♂️ Uso
 
-Ejecuta la aplicación desde la línea de comandos:
+1. Descarga la <a href="https://github.com/quserforgitp/cieloscopio-java-backend-challenge-01/releases/download/v1.0.2/cieloscopio-java_v1.0.2.jar" target="_blank">ultima version de la app</a>
+2. Ejecutala en tu linea de comandos
 
 ```sh
-java Main
+java -jar cieloscopio-java_v1.0.2.jar
 ```
 ## 📜 Menu de la aplicacion
 ```sh
@@ -37,6 +40,7 @@ java Main
 | 6. Introducir nombre manualmente                    |
 | 7. Salir                                            |
 ========================================================
+> |
 ```
 - Selecciona una opción introduciendo el número correspondiente y presionando Enter.
 
