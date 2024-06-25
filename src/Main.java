@@ -1,290 +1,88 @@
-import com.google.gson.*;
+import exceptions.NameOfCityIsBlankException;
+import exceptions.NotValidNameOfCityException;
+
+import menu.Menu;
+import models.GeoLocApiInfo;
+import models.WeatherApiInfo;
+import api.Api;
+import api.ApiUtils;
+
+import static utils.Utils.*;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.InputMismatchException;
-import java.util.Scanner;
 
 public class Main {
   public static void main(String[] args) throws IOException, InterruptedException {
 
-    // 1.-- COMPROBACIONES antes de iniciar el programa
+    checkPrerequisitesOrAbort();
     String apiKey = System.getenv("OPENWEATHERMAP_API_KEY");
-    if (!apiKeyExists(apiKey)) {
-      System.err.println("No se encontró la API key. Asegúrate de definir la variable de entorno OPENWEATHERMAP_API_KEY.");
-      return;
-    }
 
-    // 2.-- DEFINICION DE NOMBRES DE CIUDADES HARDCODEADOS
-    ArrayList<String> cityNames = new ArrayList<>();
-    cityNames.add("Morelia");
-    cityNames.add("Caracas");
-    cityNames.add("Buenos Aires");
-    cityNames.add("Brasilia");
-    cityNames.add("Quito");
-
-    // 3.-- VARIABLES/OBJS de la app
-    Scanner input = new Scanner(System.in);
     String cityName = "";
-    String onlyNamesRgx = "[a-zA-Z\\s]+";
     int opt = 0;
-    // 4.-- BUCLE APP
-    while(opt < 1 || opt > 7) {
-      // 5.-- MOSTRAR MENU
-      showMenu();
-      // 6.-- OBTENER OPCION INGRESADA POR teclado
+
+    while(optionIsOutOfRange(opt)) {
       try {
-        opt = input.nextInt();
-        input.nextLine();// Limpriar el buffer del scanner
-        // 7.-- TRAER DATOS DE LA API
-        if (opt < 1 || opt > 7) {// numero fuera de rango
-          System.err.println("El número introducido está fuera del rango permitido!!");
-          continue;
+        opt = Menu.showAndPromptUser();
+
+        switch (opt) {
+          case Menu.OP_INGRESAR_NOMBRE_CIUDAD:
+            while (isNotValidCityName(cityName)) {
+              try {
+                cityName = Menu.promptForCityName();
+              } catch (NameOfCityIsBlankException e) {
+                printErrorInConsole("Es necesario que se ingrese el nombre de una ciudad...");
+              } catch (NotValidNameOfCityException e) {
+                printErrorInConsole("No se aceptan caracteres extraños, ni numeros...");
+              }
+            }
+            break;
+          default:
+            cityName = getCityNameBasedOnOpt(opt);
         }
-      } catch (InputMismatchException e) {// se introdujo un numero o caracter extranio
-        System.err.println("Entrada no válida. Por favor, introduzca un número.");
-        input.next(); // Limpiar el buffer del scanner
+      } catch (InputMismatchException e) {
+        printErrorInConsole("Entrada no válida. Por favor, introduzca un número.");
+        continue;
+      } catch (IllegalArgumentException e) {
+        printErrorInConsole("El número introducido está fuera del rango permitido!!");
         continue;
       }
-      // 7.1.--- Se selecciono, introducir manualmente el nombre de la ciudad
-      if (opt == 6) {
-        // While pedir nombre de ciudad valido
-        while (cityName.isBlank() || !cityName.matches(onlyNamesRgx)) {
-          System.out.println("Ingrese el nombre de la ciudad");
-          System.out.printf("> ");
-          cityName = input.nextLine();
-          if (cityName.isBlank()) {
-            System.err.println("Es necesario que se ingrese el nombre de una ciudad...");
-          } else if (!cityName.matches(onlyNamesRgx)) {
-            System.err.println("No se aceptan caracteres extraños, ni numeros...");
-          }
-        }
-      } else if(opt == 7) {// se selecciono SAlir de la app
-        System.out.println("Usted escogio salir, fin del programa...");
-        return;
-      } else {// se selecciono un nombre de ciudad hardcodeado
-        cityName = cityNames.get(opt - 1);
-      }
 
-      // 8.-- FORMATEAR EL NOMBRE DE CIUDAD VALIDO PARA LA REQUEST
-      cityName = capitalizePhrase(cityName);
-      String cityNameFormatted = URLEncoder.encode(cityName, StandardCharsets.UTF_8);
+      String cityNameFormatted = formatTextAndURLencode(cityName);
 
+      Api<GeoLocApiInfo> geoLocApi = new Api<>(
+              "http://api.openweathermap.org/geo/1.0/direct",
+              "",
+              "q=" + cityNameFormatted + "&limit=1",
+              apiKey,
+              ApiUtils::extractGeoLocData
+      );
+      geoLocApi.fetchAndExtractData();
+      GeoLocApiInfo geoLocApiInfo = geoLocApi.getExtractedData();
 
-
-      // 9.-- REQUEST PARA TRAER LAS COORDENADAS DE LA CIUDAD
-      String URLgeoLocReq = "http://api.openweathermap.org/geo/1.0/direct?q="+
-              cityNameFormatted+
-              "&limit=1&appid="+apiKey;
-
-      HttpClient client = HttpClient.newHttpClient();
-
-      HttpRequest geoLocRequest = HttpRequest.newBuilder()
-              .uri(URI.create(URLgeoLocReq))
-              .build();
-
-      HttpResponse<String> geoLocResponse = client.send(geoLocRequest, HttpResponse.BodyHandlers.ofString());
-
-      String geoLocData = geoLocResponse.body();
-
-      // 10.-- EXTRAER COORDENADAS DE LA RESPUESTA (API GEO LOC)
-
-      // parsear a jsonElement (manipulable, se puede convertir a tipos de datos json)
-      JsonElement jsonElement = JsonParser.parseString(geoLocData);
-
-      // parsear a array tipo json
-      JsonArray jsonArray = jsonElement.getAsJsonArray();
-
-      // obtener el objeto tipo json del array tipo json
-      if (jsonArray.isEmpty()) {
+      if (geoLocApiInfo == null) {
         System.err.println("No se encontró información con el nombre de ciudad introducido: " + cityName);
         opt = 0;
         cityName = "";
         continue;
       }
 
-      JsonObject jsonObj = jsonArray.get(0).getAsJsonObject();
+      Api<WeatherApiInfo> weatherApi = new Api<>(
+              "https://api.openweathermap.org/data/2.5/weather",
+              "",
+              "lat=" + geoLocApiInfo.getLat() + "&lon=" + geoLocApiInfo.getLon() + "&lang=sp&units=metric",
+              apiKey,
+              response -> ApiUtils.extractWeatherData(response, geoLocApiInfo)
+      );
+      weatherApi.fetchAndExtractData();
+      WeatherApiInfo weatherInfo = weatherApi.getExtractedData();
 
-      // Extraer datos del objeto tipo json como String's
-      String lat = jsonObj.get("lat").getAsString();
-      String lon = jsonObj.get("lon").getAsString();
+      weatherInfo.showInfo();
 
-      String nameInSpanish = jsonObj.get("name").getAsString();
-      if (jsonObj.has("local_names"))
-        nameInSpanish = jsonObj.get("local_names").getAsJsonObject().get("es").getAsString();
-
-
-
-      // 11.-- REQUEST PARA OBTENER DATOS DEL CLIMA (API WEATHER)
-      HttpRequest weatherRequest = HttpRequest.newBuilder()
-              .uri(URI.create("https://api.openweathermap.org/data/2.5/weather?lat="+lat+
-                      "&lon="+lon+
-                      "&appid="+apiKey+
-                      "&lang=sp&units=metric"))
-              .build();
-
-      HttpResponse<String> weatherResponse = client.send(weatherRequest, HttpResponse.BodyHandlers.ofString());
-
-      String weatherData = weatherResponse.body();
-
-      JsonObject weatherJsonObj = JsonParser
-              .parseString(weatherData)
-              .getAsJsonObject();
-
-      // 12.-- EXTRAER DATOS DEL CLIMA DE LA RESPUESTA
-      JsonObject condClimJsonObj = weatherJsonObj
-              .get("weather")
-              .getAsJsonArray()
-              .get(0)
-              .getAsJsonObject();
-
-      // EXTRAER CONDICIONES DEL CLIMA
-      String condClimMain = condClimJsonObj
-              .get("main")
-              .getAsString();
-      String condClimDesc = condClimJsonObj
-              .get("description")
-              .getAsString();
-
-      String volumenLluvia = "...";
-
-      // si hay informacion de la lluvia, entonces setear a variable
-      if (weatherJsonObj.has("rain")) {
-        JsonObject lluviaJsonObj = weatherJsonObj.get("rain").getAsJsonObject();
-
-        volumenLluvia = lluviaJsonObj.has("1h") ?
-                lluviaJsonObj.get("1h").getAsString() :
-                lluviaJsonObj.get("3h").getAsString();
-        volumenLluvia += " Lts por metro cúbico";
-      }
-
-      // EXTRAER TEMPERATURAS
-      JsonObject tempJsonObj = weatherJsonObj
-              .get("main")
-              .getAsJsonObject();
-      String temp = tempJsonObj
-              .get("temp")
-              .getAsString();
-      String minTemp = tempJsonObj
-              .get("temp_min")
-              .getAsString();
-      String maxTemp = tempJsonObj
-              .get("temp_max")
-              .getAsString();
-
-      // 13.-- MOSTRAR INFORMACION DEL CLIMA AL USUARIO
-      WeatherInfo weatherInfo = new WeatherInfo(nameInSpanish, condClimMain, condClimDesc, volumenLluvia, temp, maxTemp, minTemp);
-      showWeatherInfo(weatherInfo);
-
-      // VARIABLES DE CONTROL DEL FLUJO RESETEADAS
       System.out.println("\n");
       opt = 0;
       cityName = "";
     }
-  }
-  public static void showMenu () {
-    System.out.println("""
-            ========================= MENÚ =========================
-            | 1. Morelia (mx)                                     |
-            | 2. Caracas (vnz)                                    |
-            | 3. Buenos Aires (arg)                               |
-            | 4. Brasilia (br)                                    |
-            | 5. Quito (ec)                                       |
-            | 6. Introducir nombre manualmente                    |
-            | 7. Salir                                            |
-            ========================================================
-            """);
-    System.out.println("ingrese una opción");
-    System.out.printf("> ");
-
-  }
-  public static String capitalizePhrase (String phrase) {
-
-    String mutablePhrase = phrase.substring(0);
-
-    String splittedPhrase[] = mutablePhrase.split(" ");
-    String reJoinedPhrase = "";
-
-    for (String word : splittedPhrase) {
-      word = word.substring(0,1).toUpperCase() + word.substring(1).toLowerCase();
-      reJoinedPhrase += word + " ";
-    }
-    reJoinedPhrase = reJoinedPhrase.substring(0,reJoinedPhrase.length());
-
-    return reJoinedPhrase;
-  }
-  public static boolean apiKeyExists (String apiKeyString) {
-    return !(apiKeyString == null || apiKeyString.isEmpty());
-  }
-  public static void showWeatherInfo (WeatherInfo weatherInfo) {
-    System.out.printf("""
-            =============== RETRIEVED INFORMATION ===============
-            ciudad: %s
-            condicion: %s
-            descripción: %s
-            precipitación: %s
-            temperatura actual: %s
-            temperatura maxima: %s
-            temperatura minima: %s""",
-            weatherInfo.getCityName(),
-            weatherInfo.getConditionMain(),
-            weatherInfo.getConditionDescription(),
-            weatherInfo.getPrecipitationVolume(),
-            weatherInfo.getTemperature(),
-            weatherInfo.getMaxTemperature(),
-            weatherInfo.getMinTemperature());
-  }
-}
-
-class WeatherInfo {
-  private String cityName;
-  private String conditionMain;
-  private String conditionDescription;
-  private String precipitationVolume;
-  private String temperature;
-  private String maxTemperature;
-  private String minTemperature;
-  public WeatherInfo(String cityName, String conditionMain, String conditionDescription, String precipitationVolume, String temperature, String maxTemperature, String minTemperature) {
-    this.cityName = cityName;
-    this.conditionMain = conditionMain;
-    this.conditionDescription = conditionDescription;
-    this.precipitationVolume = precipitationVolume;
-    this.temperature = temperature;
-    this.maxTemperature = maxTemperature;
-    this.minTemperature = minTemperature;
-  }
-  public String getCityName() {
-    return this.cityName;
-  }
-
-  public String getConditionMain() {
-    return this.conditionMain;
-  }
-
-  public String getConditionDescription() {
-    return this.conditionDescription;
-  }
-
-  public String getPrecipitationVolume() {
-    return this.precipitationVolume;
-  }
-
-  public String getTemperature() {
-    return this.temperature;
-  }
-
-  public String getMaxTemperature() {
-    return this.maxTemperature;
-  }
-
-  public String getMinTemperature() {
-    return this.minTemperature;
   }
 }
